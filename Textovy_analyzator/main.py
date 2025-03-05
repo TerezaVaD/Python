@@ -32,7 +32,7 @@ TEXTS = [
     in modern oceans. Other fish such as paddlefish,
     garpike and stingray are also present.'''
 ]
-
+# overeni prihlasovacich udaju
 users = {"bob":"123","ann":"pass123","mike":"password123","liz":"pass123"}
 login = input("Username: ")
 password = input("Password: ")
@@ -45,15 +45,19 @@ else:
     print("Unregistered user, terminating the program..")
     exit()
 
-number = int(input("Enter a number btw. 1 and 3 to select: "))
-print("-" * 30)
+# zadani cisla textu a overeni, zda neni zadana jina hodnota nez cislo (osetreno try-except)
+# resp zda je zadane cislo 1-3
+try:
+    number = int(input("Enter a number btw. 1 and 3 to select: "))
+except ValueError:
+    print("This is not number, terminating the program..")
+    exit()
 if number > 3 or number < 1:
     print("Out of range, terminating the program..")
     exit()
-elif not isinstance(number,int):
-    print("This is not number, terminating the program..")
-    exit()
 
+# jednotlive operace s textem
+print("-" * 30)
 selected_text = TEXTS[number-1]
 titlecase_words = [word for word in selected_text.split() if word[0].isupper()]
 uppercase_words = [word for word in selected_text.split() if word.isupper()]
@@ -66,16 +70,19 @@ print(f"There are {len(lowercase_words)} lowercase words.")
 print(f"There are {len(numeric_strings)} numeric strings.")
 print("The sum of all the numbers",sum(list(map(int,numeric_strings))))
 
+# priprava jednoducheho grafu, stanoveni sire sloupcu pro lepsi prehlednost grafu
 words_lenght = [len(word) for word in selected_text.split()]
 
 col1_width = 3
 col2_width = 12
 col3_width = 3
 
+# hlavicka grafu
 print("-" * 30)
 print(f"{'LEN':<{col1_width+2}} | {'OCCURENCES':<{col2_width+3}} | {'NR.':<{col3_width}}")
 print("-" * 30)
 
+# vypsani samotneho grafu
 for i in range(1,max(words_lenght)+1):
     if words_lenght[i]>0:
         print(f"{i:<{col1_width}}   | {'*' * words_lenght[i]:<{col2_width}}    | {words_lenght[i]:<{col3_width}}")
