@@ -71,7 +71,15 @@ print(f"There are {len(numeric_strings)} numeric strings.")
 print("The sum of all the numbers",sum(list(map(int,numeric_strings))))
 
 # priprava jednoducheho grafu, stanoveni sire sloupcu pro lepsi prehlednost grafu
-words_lenght = [len(word) for word in selected_text.split()]
+words_length = [len(word) for word in selected_text.split()]
+
+# spocitani cetnosti
+length_counts = {}
+for length in words_length:
+    if length in length_counts:
+        length_counts[length] += 1
+    else:
+        length_counts[length] = 1
 
 col1_width = 3
 col2_width = 12
@@ -83,6 +91,7 @@ print(f"{'LEN':<{col1_width+2}} | {'OCCURENCES':<{col2_width+3}} | {'NR.':<{col3
 print("-" * 30)
 
 # vypsani samotneho grafu
-for i in range(1,max(words_lenght)+1):
-    if words_lenght[i]>0:
-        print(f"{i:<{col1_width}}   | {'*' * words_lenght[i]:<{col2_width}}    | {words_lenght[i]:<{col3_width}}")
+for i in range(1,max(words_length)+1):
+    count = length_counts.get(i, 0)
+    if words_length[i]>0:
+        print(f"{i:<{col1_width}}   | {'*' * count:<{col2_width}}    | {count:<{col3_width}}")
