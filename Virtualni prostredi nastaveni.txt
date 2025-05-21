@@ -1,0 +1,6 @@
+Dále posílám odkaz na nastavení virtuálního prostředí ve VSC: https://code.visualstudio.com/docs/python/environments
+A dále posílám upravený postup i sem: 
+1) python -m venv <jmeno_prostredi>
+2) Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+3) .<jmeno_prostredi>\Scripts\activate.ps1
+4) na obrázku vidíte, jak by to mělo vypadat v terminálu VSC

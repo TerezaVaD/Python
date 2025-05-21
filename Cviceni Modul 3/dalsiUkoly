@@ -1,0 +1,27 @@
+'''
+with open("dalsi_soubor.txt", mode="w") as txt_soubor:
+    txt_soubor.write("Nový txt s kontextovým manažerem!")
+
+txt_soubor = open("dalsi_soubor.txt", mode="r")
+obsah_txt = txt_soubor.read()
+print(obsah_txt)
+txt_soubor.close()
+'''
+prvni_radek = "První řádek v souboru,\n"
+druhy_radek = "druhý řádek v souboru,\n"
+treti_radek = "třetí řádek v souboru."
+jmeno_souboru = "muj_soubor.txt"
+
+def zapis_do_souboru(jmeno_souboru, *args):
+    with open(jmeno_souboru, mode="w", encoding="utf-8") as txt_soubor:
+        txt_soubor.write("".join(args))
+
+def nacti_ze_souboru(jmeno_souboru):
+    with open(jmeno_souboru, mode="r", encoding="utf-8") as radky:
+        return radky.readlines()
+
+zapis_do_souboru(jmeno_souboru, prvni_radek, druhy_radek, treti_radek)
+existujici_txt = nacti_ze_souboru(jmeno_souboru)
+
+spojene_radky = "".join(existujici_txt)
+print("Jednotlivé řádky:", spojene_radky)

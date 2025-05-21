@@ -1,0 +1,128 @@
+import requests
+from bs4 import BeautifulSoup
+import csv
+import sys
+
+def get_obec_links(url):
+    """
+    Stahne HTML ze zadane URL a ziska seznam odkazu na stranky jednotlivych obci.
+    """
+    response = requests.get(url)
+    response.encoding = 'utf-8'
+    soup = BeautifulSoup(response.text, 'html.parser')
+    links = []
+
+    table = soup.find('table', {'class': 'table'})   # Najde tabulku s tridou "table"
+    if not table:
+        return []
+
+    for row in table.find_all('tr')[2:]:   # preskoci hlavicku
+        cells = row.find_all('td')
+        if len(cells) < 2:
+            continue
+        obec_name = cells[1].get_text(strip=True)
+        link_tag = cells[0].find('a')
+        if link_tag and 'href' in link_tag.attrs:
+            link = 'https://www.volby.cz/pls/ps2017nss/' + link_tag['href']
+            links.append((obec_name, link))   # Ulozi nazev obce a jeji URL
+    return links
+
+def get_additional_data(obec_url):
+    """ 
+    Ziskani udaju Registered, Envelopes, Valid ze stranky obce 
+    """
+    response = requests.get(obec_url)
+    response.encoding = 'utf-8'
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    tables = soup.find_all('table', {'class': 'table'})
+    for table in tables:
+        rows = table.find_all('tr')
+        for row in rows:
+            cells = row.find_all('td')
+            if len(cells) >= 8:
+                try:
+                    registered = cells[3].get_text(strip=True).replace('\xa0', '')
+                    envelopes = cells[6].get_text(strip=True).replace('\xa0', '')
+                    valid = cells[7].get_text(strip=True).replace('\xa0', '')
+                    return registered, envelopes, valid
+                except IndexError:
+                    continue
+    return 'N/A', 'N/A', 'N/A'
+
+def get_party_votes(obec_url):
+    """
+    Ziska pocet hlasu pro kazdou stranu v dane obci.
+    """
+    response = requests.get(obec_url)
+    response.encoding = 'utf-8'
+    soup = BeautifulSoup(response.text, 'html.parser')
+    results = {}
+
+    tables = soup.find_all('table', {'class': 'table'})[1:3]   # dve tabulky s vysledky stran (volby stran byvaji ve 2. a 3. tabulce)
+    for table in tables:
+        rows = table.find_all('tr')[2:]
+        for row in rows:
+            cells = row.find_all('td')
+            if len(cells) >= 3:
+                party = cells[1].get_text(strip=True)
+                votes = cells[2].get_text(strip=True).replace('\xa0', '')
+                results[party] = votes
+    return results
+
+def save_to_csv(data, parties, output_file):
+    """
+    Ulozi kompletni data do CSV souboru.
+    """
+    with open(output_file, 'w', newline='', encoding='utf-8-sig') as f:
+        writer = csv.writer(f)
+        header = ['Code', 'Location', 'Registered', 'Envelopes', 'Valid'] + parties
+        writer.writerow(header)
+        for row in data:
+            writer.writerow(row)
+
+def main():
+    if len(sys.argv) != 3:
+        print("Použití: python main.py <URL> <výstupní_soubor.csv>")
+        sys.exit(1)
+
+    base_url = sys.argv[1]
+    output_file = sys.argv[2]
+
+    print(f"Stahuji data z: {base_url}")
+    obec_links = get_obec_links(base_url)
+
+    if not obec_links:
+        print("Nebylo možné získat odkazy na obce.")
+        sys.exit(1)
+
+    print(f"Nalezeno {len(obec_links)} obcí. Zpracovávám...")
+
+    all_data = []
+    all_parties = set()
+
+    for obec_name, link in obec_links:
+        obec_code = link.split('xobec=')[-1].split('&')[0]
+        registered, envelopes, valid = get_additional_data(link)
+        votes = get_party_votes(link)
+        all_parties.update(votes.keys())
+        row = [obec_code, obec_name, registered, envelopes, valid] + [votes.get(party, '0') for party in sorted(all_parties)]
+        all_data.append(row)
+
+    all_parties = sorted(all_parties)
+
+    final_data = []
+    for row in all_data:
+        obec_code = row[0]
+        obec_name = row[1]
+        registered, envelopes, valid = row[2], row[3], row[4]
+        vote_dict = dict(zip(sorted(all_parties), row[5:]))
+        row_final = [obec_code, obec_name, registered, envelopes, valid] + [vote_dict.get(party, '0') for party in all_parties]
+        final_data.append(row_final)
+
+    print(f"Ukládám data do souboru: {output_file}")
+    save_to_csv(final_data, all_parties, output_file)
+    print("Hotovo.")
+
+if __name__ == "__main__":
+    main()
